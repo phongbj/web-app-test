@@ -74,7 +74,6 @@ const App: React.FC = () => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
 
-    // Xác thực ngay khi thay đổi
     const error = validateField(name, value);
     setErrors({ ...errors, [name]: error });
   };
@@ -84,7 +83,6 @@ const App: React.FC = () => {
     newTexts[index] = value;
     setForm({ ...form, texts: newTexts });
 
-    // Xác thực ngay khi thay đổi
     const error = validateField('texts', newTexts);
     setErrors({ ...errors, texts: error });
   };
@@ -101,9 +99,9 @@ const App: React.FC = () => {
       return;
     }
   
-    setForm(bannerToEdit); // Populate the form with the selected banner data
-    setIsEditing(true); // Indicate editing mode
-    setIsPopupOpen(true); // Open the popup for editing
+    setForm(bannerToEdit); 
+    setIsEditing(true); 
+    setIsPopupOpen(true);
   };
 
   const handleDelete = (id: number) => {
@@ -143,18 +141,17 @@ const App: React.FC = () => {
   };
   
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];  // Lấy file đầu tiên được chọn
+    const file = e.target.files?.[0]; 
     if (file) {
-      // Tạo URL cho file hình ảnh đã chọn
       const imageUrl = URL.createObjectURL(file);
-      setForm({ ...form, image: imageUrl });  // Cập nhật trạng thái với URL hình ảnh
+      setForm({ ...form, image: imageUrl }); 
     }
   };
   
 
   const openPopup = () => {
     setIsPopupOpen(true);
-    setForm({ texts: [''] }); // Reset form
+    setForm({ texts: [''] });
   };
 
   const closePopup = () => {
