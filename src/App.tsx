@@ -183,7 +183,7 @@ const App: React.FC = () => {
       {isPopupOpen && (
   <div className="popup">
     <div className="popup-content">
-      <h3>Create/Edit Banner</h3>
+    <h3>{form.name ? 'Edit Banner' : 'Create Banner'}</h3>
       
       <label>
         Banner Name:
