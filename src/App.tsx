@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import './App.css';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import BannerTable from './component/BannerTable';
+import PopupForm from './component/PopupForm';
 
 type Banner = {
   id: number;
@@ -48,212 +52,59 @@ const App: React.FC = () => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const validateField = (name: string, value: string | string[]) => {
-    if (name === 'name' && (!value)) {
-      return 'Banner Name is required.';
-    }
-    if (name === 'link' && (!value)) {
-      return 'Link is required.';
-    }
-    if (name === 'texts' && (!Array.isArray(value) || value.length === 0 || value.some(text => text.trim() === ''))) {
-      return 'At least one valid text is required.';
-    }
-    return '';
-  };
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    newErrors.name = validateField('name', form.name || '');
-    newErrors.link = validateField('link', form.link || '');
-    newErrors.texts = validateField('texts', form.texts || []);
-    setErrors(newErrors);
-    return Object.values(newErrors).every(error => !error);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-
-    const error = validateField(name, value);
-    setErrors({ ...errors, [name]: error });
-  };
-
-  const handleTextChange = (index: number, value: string) => {
-    const newTexts = [...(form.texts || [])];
-    newTexts[index] = value;
-    setForm({ ...form, texts: newTexts });
-
-    const error = validateField('texts', newTexts);
-    setErrors({ ...errors, texts: error });
-  };
-
-  const addText = () => {
-    setForm({ ...form, texts: [...(form.texts || []), ''] });
-  };
-
   const handleEdit = (id: number) => {
     const bannerToEdit = banners.find(banner => banner.id === id);
-  
-    if (!bannerToEdit) {
-      alert('Banner not found.');
-      return;
+    if (bannerToEdit) {
+      setForm(bannerToEdit);
+      setIsEditing(true);
+      setIsPopupOpen(true);
     }
-  
-    setForm(bannerToEdit); 
-    setIsEditing(true); 
-    setIsPopupOpen(true);
   };
 
   const handleDelete = (id: number) => {
     const confirmDelete = window.confirm('Are you sure you want to delete this banner?');
-    
     if (confirmDelete) {
       setBanners(prevBanners => prevBanners.filter(banner => banner.id !== id));
-      alert('Banner deleted successfully.');
+      toast.success('Banner deleted successfully.');
     }
-  };  
+  };
 
-  const handleSubmit = () => {
-    if (!validateForm()) {
-      alert('Please fix the errors before submitting.');
-      return;
-    }
-
-    if (isEditing && form.id) {
-      setBanners(banners.map(b => (b.id === form.id ? { ...b, ...form } : b)));
+  const handleSave = (newBanner: Banner, isEditing: boolean) => {
+    if (isEditing) {
+      setBanners(banners.map(b => (b.id === newBanner.id ? newBanner : b)));
+      toast.success('Banner updated successfully.');
     } else {
-      const newBanner: Banner = {
-        id: banners.length + 1,
-        order: (banners.length + 1).toString().padStart(2, '0'),
-        name: form.name!,
-        link: form.link!,
-        texts: form.texts || [],
-        date: new Date().toISOString().split('T')[0],
-        image: form.image || 'https://via.placeholder.com/100',
-      };
-      setBanners([...banners, newBanner]);
+      setBanners([...banners, { ...newBanner, id: banners.length + 1, order: (banners.length + 1).toString().padStart(2, '0') }]);
+      toast.success('Banner created successfully.');
     }
-
-    setForm({ texts: [''] });
-    setIsEditing(false);
     setIsPopupOpen(false);
-    setErrors({});
+    setForm({ texts: [''] });
   };
-  
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; 
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setForm({ ...form, image: imageUrl }); 
-    }
-  };
-  
 
   const openPopup = () => {
-    setIsPopupOpen(true);
     setForm({ texts: [''] });
-  };
-
-  const closePopup = () => {
-    setIsPopupOpen(false);
+    setIsEditing(false);
+    setIsPopupOpen(true);
   };
 
   return (
     <div className="App">
+      <ToastContainer />
       <div className="button-add">
         <button onClick={openPopup}>Add +</button>
       </div>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Banner ID</th>
-            <th>Order</th>
-            <th>Banner Name</th>
-            <th>Link</th>
-            <th>Texts</th>
-            <th>Registration Date</th>
-            <th>Image</th>
-            <th>Edit</th>
-            <th>Delete</th>
-          </tr>
-        </thead>
-        <tbody>
-          {banners.map(banner => (
-            <tr key={banner.id}>
-              <td>{banner.id}</td>
-              <td>{banner.order}</td>
-              <td>{banner.name}</td>
-              <td>{banner.link}</td>
-              <td>{banner.texts.join(', ')}</td>
-              <td>{banner.date}</td>
-              <td><img src={banner.image} alt="banner" width="200" /></td>
-              <td><button className="button1" onClick={() => handleEdit(banner.id)}>Edit</button></td>
-              <td><button className="button2" onClick={() => handleDelete(banner.id)}>Delete</button></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
+      <BannerTable banners={banners} onEdit={handleEdit} onDelete={handleDelete} />
       {isPopupOpen && (
-        <div className="popup">
-          <div className="popup-content">
-            <h3>{isEditing ? 'Edit Banner' : 'Create Banner'}</h3>
-
-            <label>
-              Banner Name:
-              <input
-                type="text"
-                name="name"
-                value={form.name || ''}
-                onChange={handleInputChange}
-              />
-              {errors.name && <span className="error">{errors.name}</span>}
-            </label>
-
-            <label>
-              Link:
-              <input
-                type="text"
-                name="link"
-                value={form.link || ''}
-                onChange={handleInputChange}
-              />
-              {errors.link && <span className="error">{errors.link}</span>}
-            </label>
-
-            <label>
-              Texts:
-              {form.texts?.map((text, index) => (
-                <div key={index}>
-                  <input
-                    type="text"
-                    value={text}
-                    onChange={(e) => handleTextChange(index, e.target.value)}
-                  />
-                </div>
-              ))}
-              {errors.texts && <span className="error">{errors.texts}</span>}
-              <button onClick={addText}>Add Text</button>
-            </label>
-
-            <label>
-              Image:
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-              />
-            </label>
-
-            <div className="btn-container">
-              <button onClick={closePopup}>Close</button>
-              <button onClick={handleSubmit}>Save</button>
-            </div>
-          </div>
-        </div>
+        <PopupForm
+          form={form}
+          setForm={setForm}
+          isEditing={isEditing}
+          onSave={handleSave}
+          onClose={() => setIsPopupOpen(false)}
+          errors={errors}
+          setErrors={setErrors}
+        />
       )}
-
     </div>
   );
 };
